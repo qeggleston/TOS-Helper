@@ -1,11 +1,21 @@
 import React from 'react';
 import logo from './logo.svg';
+import { Corpus } from "tiny-tfidf";
 import './App.css';
+
+let testTitle = ['test'];
+let testText = ['hello goodbye farewell farewell angry'];
+
+function testTextAnalyze() {
+  let corpus = new Corpus(testTitle, testText);
+  return corpus.getStopwords().getStopwordList();
+}
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
+        {testTextAnalyze()}
         <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.js</code> and save to reload.
@@ -22,5 +32,7 @@ function App() {
     </div>
   );
 }
+
+
 
 export default App;
