@@ -2,76 +2,85 @@
 import { Engine, World, Body, Bodies, Constraint, Mouse, MouseConstraint } from 'matter-js';
 
 var engine;
-var ground;
-var ball1;
-var ball2;
+var ground, leftWall, rightWall, ceiling;
 var catapult;
-var catapultSpacer;
 var constraint;
 var canvas;
 var mouseConstraint;
+var ballObjects;
+
+let firstOptions = true;
+let secondOptions = false;
+let viz = false;
+let document;
+
+let button1;
+let button2;
 
 export default function sketch(p) {
 
     p.setup = () => {
-        canvas = p.createCanvas(800, 600);
-
-        // create an engine
-        engine = Engine.create();
-
-        // add revolute constraint for catapult
-        catapult = Bodies.rectangle(400, 520, 600, 20);
-        constraint = Constraint.create({
-            pointA: {x: 400, y: 520},
-            bodyB: catapult,
-            stiffness: 1,
-            length: 0
-        });
-        World.add(engine.world, [catapult, constraint]);
-
-        // balls and catapult spacer for limit
-        catapultSpacer = Bodies.rectangle(150, 555, 20, 50, {isStatic: true });
-        ball1 = Bodies.circle(560, 100, 50, {density: 0.01}); // make big one more 'heavy'
-        ball2 = Bodies.circle(110, 480, 20);
-        World.add(engine.world, [catapultSpacer, ball1, ball2]);
-
-        // ground
-        ground = Bodies.rectangle(400, p.height-10, 810, 25, {isStatic: true});
-        World.add(engine.world, [ground]);
-
-        // setup mouse
-        var mouse = Mouse.create(canvas.elt);
-        var mouseParams = {
-            mouse: mouse,
-            constraint: { stiffness: 0.05 }
+        canvas = p.createCanvas(p.windowWidth, p.windowHeight);        
+        setupFirstOptions(p);
+    }
+    
+    p.myCustomRedrawAccordingToNewPropsHandler = function(props) {
+        if(props.document != null) {
+            document = props.document;
+            console.log(document);
         }
-        mouseConstraint = MouseConstraint.create(engine, mouseParams);
-        mouseConstraint.mouse.pixelRatio = p.pixelDensity();
-        World.add(engine.world, mouseConstraint);
-
-        // run the engine
-        Engine.run(engine);
     }
 
     p.draw = () => {
-        p.background(0);
-
-        p.stroke(255);
-        p.fill(255);
-        drawVertices(catapult.vertices, p);
-        drawVertices(catapultSpacer.vertices, p);
-        drawVertices(ball1.vertices, p);
-        drawVertices(ball2.vertices, p);
-        p.stroke(128);
-        p.strokeWeight(2);
-        drawConstraint(constraint, p);
-
-        p.noStroke();
-        p.fill(128);
-        drawVertices(ground.vertices, p);
-
-        drawMouse(mouseConstraint, p);
+        if(firstOptions) {
+            p.background(0);
         }
+        else if(secondOptions) {
+            p.background(0);
+        }
+        else if(viz) {
+            p.background(0);
+
+            p.stroke(255);
+            p.fill(255);
+            drawVertices(catapult.vertices, p);
+            for(let x = 0; x < ballObjects.length; x++) {
+                drawVertices(ballObjects[x].vertices, p);
+            }
+            p.stroke(128);
+            p.strokeWeight(2);
+            drawConstraint(constraint, p);
+
+            p.noStroke();
+            p.fill(128);
+            drawVertices(ground.vertices, p);
+            drawVertices(leftWall.vertices, p);
+            drawVertices(rightWall.vertices, p);
+            drawVertices(ceiling.vertices, p);
+
+            drawMouse(mouseConstraint, p);
+
+            p.stroke(0);
+            p.fill(0);
+        }
+    }
+
+}
+
+function setupFirstOptions(p) {
+    button1 = p.createButton('click me 1');
+    button1.position(p.width/2, p.height/2);
+    button1.mousePressed(() => setupSecondOptions(p));
+
+}
+
+function setupSecondOptions(p) {
+    firstOptions = false;
+    secondOptions = true;
+    button1.remove();
+    button2 = p.createButton('click me 2');
+    button2.position(p.width/2, p.height/2);
+    button2.mousePressed(() => setupViz(p));
 
 }
 
@@ -111,4 +120,85 @@ function drawVertices(vertices, p) {
         p.vertex(vertices[i].x, vertices[i].y);
     }
     p.endShape(p.CLOSE);
+}
+
+function setupViz(p) {
+    secondOptions = false;
+    viz = true;
+    button2.remove();
+
+    let uniqueTerms = document.getUniqueTerms();
+    console.log(uniqueTerms);
+    let termBalls = [];
+    ballObjects = [];
+
+    // create an engine
+    engine = Engine.create();
+
+    // add revolute constraint for catapult
+    catapult = Bodies.rectangle(p.width/2, p.height - 200, p.width - 200, 50);
+    constraint = Constraint.create({
+        pointA: {x: p.width/2, y: p.height-200},
+        bodyB: catapult,
+        stiffness: 1,
+        length: 0
+    });
+    World.add(engine.world, [catapult, constraint]);
+
+    let xPos = 50;
+    let yPos = 50;
+
+    for(let x = 0; x < uniqueTerms.length; x++) {
+        if(uniqueTerms[x].length > 11) {
+            termBalls[x] = {
+                term: uniqueTerms[x],
+                freq: document.getTermFrequency(uniqueTerms[x]),
+                ball: null
+            };
+            termBalls[x].ball = Bodies.circle(xPos, yPos, 20, {density: termBalls[x].freq/10, restitution: 0.5});
+            ballObjects[ballObjects.length] = termBalls[x].ball;
+
+            if(xPos > p.width - 100) {
+                xPos = 50;
+                yPos += 50;
+            }
+            else {
+                xPos += 50;
+            }
+            
+        }
+    }
+
+    console.log(ballObjects);
+    World.add(engine.world, ballObjects);
+
+    // walls 
+    rightWall = Bodies.rectangle(p.width - 10, p.height/2, 25, p.height, {isStatic: true});
+    leftWall = Bodies.rectangle(10, p.height/2, 25, p.height, {isStatic: true});
+    ceiling = Bodies.rectangle(p.width/2, 10, p.width, 25, {isStatic: true});
+    ground = Bodies.rectangle(p.width/2, p.height-10, p.width, 25, {isStatic: true});
+    World.add(engine.world, [ground, leftWall, rightWall, ceiling]);
+
+    // setup mouse
+    var mouse = Mouse.create(canvas.elt);
+    var mouseParams = {
+        mouse: mouse,
+        constraint: { stiffness: 1 }
+    }
+    mouseConstraint = MouseConstraint.create(engine, mouseParams);
+    mouseConstraint.mouse.pixelRatio = p.pixelDensity();
+    World.add(engine.world, mouseConstraint);
+
+    // run the engine
+    Engine.run(engine);
+}
+
+//draw floating word bubbles 
+function drawWordBubble(p) {
+
+}
+
+//setup word bubbles based on 
+function setupWordBubbles(p, words) {
+
 }

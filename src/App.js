@@ -174,7 +174,7 @@ If we materially change these terms or service-specific additional terms, we’l
 
 function testTextAnalyze() {
   let corpus = new Corpus(testTitle, testText);
-  return corpus.getTerms();
+  return corpus.getDocument("Google TOS");
 }
 
 class App extends React.Component {
@@ -206,7 +206,7 @@ class App extends React.Component {
       return (
         <P5Wrapper
             sketch={sketch}
-            corpus={this.state.corpus}>
+            document={this.state.corpus}>
         </P5Wrapper>
     );
     }
