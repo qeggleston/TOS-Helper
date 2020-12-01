@@ -8,6 +8,8 @@ var constraint;
 var canvas;
 var mouseConstraint;
 var ballObjects;
+var ballIndex;
+var termBalls;
 
 let firstOptions = true;
 let secondOptions = false;
@@ -16,6 +18,13 @@ let document;
 
 let button1;
 let button2;
+
+let lengthToSize;
+let freqToWeight;
+let weightToRest;
+//add more parameters here
+
+let wordBubbles;
 
 export default function sketch(p) {
 
@@ -39,17 +48,24 @@ export default function sketch(p) {
             p.background(0);
         }
         else if(viz) {
-            p.background(0);
+            p.background(131,173,225);
 
             p.stroke(255);
             p.fill(255);
             drawVertices(catapult.vertices, p);
             for(let x = 0; x < ballObjects.length; x++) {
-                drawVertices(ballObjects[x].vertices, p);
+                if(termBalls[x].draw) {
+                    p.stroke(249,228,219);
+                    p.fill(249,228,219);
+                    drawVertices(ballObjects[x].vertices, p);
+                    p.stroke(0);
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.text(termBalls[x].term, ballObjects[x].position.x, ballObjects[x].position.y + 5); //make this center
+                }
             }
             p.stroke(128);
             p.strokeWeight(2);
-            drawConstraint(constraint, p);
 
             p.noStroke();
             p.fill(128);
@@ -58,11 +74,19 @@ export default function sketch(p) {
             drawVertices(rightWall.vertices, p);
             drawVertices(ceiling.vertices, p);
 
-            drawMouse(mouseConstraint, p);
-
             p.stroke(0);
             p.fill(0);
+
+            p.rect(0, 0, 50, 50);
         }
+    }
+
+    p.mousePressed = () => {
+        if(p.mouseX < 50 && p.mouseX > 0 && p.mouseY < 50 && p.mouseX > 0 && ballIndex < ballObjects.length) {
+            World.add(engine.world, ballObjects[ballIndex]);
+            termBalls[ballIndex].draw = true;
+            ballIndex++;
+        }   
     }
 
 }
@@ -84,35 +108,6 @@ function setupSecondOptions(p) {
 
 }
 
-function drawConstraint(constraint, p) {
-    var offsetA = constraint.pointA;
-    var posA = {x:0, y:0};
-    if (constraint.bodyA) {
-        posA = constraint.bodyA.position;
-    }
-    var offsetB = constraint.pointB;
-    var posB = {x:0, y:0};
-    if (constraint.bodyB) {
-        posB = constraint.bodyB.position;
-    }
-    p.line(
-        posA.x + offsetA.x,
-        posA.y + offsetA.y,
-        posB.x + offsetB.x,
-        posB.y + offsetB.y
-    );
-}
-
-function drawMouse(mouseConstraint, p) {
-    if (mouseConstraint.body) {
-        var pos = mouseConstraint.body.position;
-        var offset = mouseConstraint.constraint.pointB;
-        var m = mouseConstraint.mouse.position;
-        p.stroke(0, 255, 0);
-        p.strokeWeight(2);
-        p.line(pos.x + offset.x, pos.y + offset.y, m.x, m.y);
-    }
-}
 
 function drawVertices(vertices, p) {
     p.beginShape();
@@ -129,19 +124,20 @@ function setupViz(p) {
 
     let uniqueTerms = document.getUniqueTerms();
     console.log(uniqueTerms);
-    let termBalls = [];
+    termBalls = [];
     ballObjects = [];
 
-    // create an engine
     engine = Engine.create();
 
     // add revolute constraint for catapult
     catapult = Bodies.rectangle(p.width/2, p.height - 200, p.width - 200, 50);
+    catapult.slop = 1;
     constraint = Constraint.create({
         pointA: {x: p.width/2, y: p.height-200},
         bodyB: catapult,
         stiffness: 1,
-        length: 0
+        length: 0,
+        static: true
     });
     World.add(engine.world, [catapult, constraint]);
 
@@ -150,13 +146,16 @@ function setupViz(p) {
 
     for(let x = 0; x < uniqueTerms.length; x++) {
         if(uniqueTerms[x].length > 11) {
-            termBalls[x] = {
+            termBalls[termBalls.length] = {
                 term: uniqueTerms[x],
                 freq: document.getTermFrequency(uniqueTerms[x]),
-                ball: null
+                ball: null,
+                size: 30,
+                draw: false
             };
-            termBalls[x].ball = Bodies.circle(xPos, yPos, 20, {density: termBalls[x].freq/10, restitution: 0.5});
-            ballObjects[ballObjects.length] = termBalls[x].ball;
+            termBalls[termBalls.length - 1].ball = Bodies.circle(xPos, yPos, termBalls[termBalls.length - 1].size, {density: termBalls[termBalls.length - 1].freq/10, restitution: 0.5}); 
+            //size will be lengthToSize[x], density will be freqToWeight[x], rest will be weightToRest[x]
+            ballObjects[ballObjects.length] = termBalls[termBalls.length - 1].ball;
 
             if(xPos > p.width - 100) {
                 xPos = 50;
@@ -169,8 +168,8 @@ function setupViz(p) {
         }
     }
 
-    console.log(ballObjects);
-    World.add(engine.world, ballObjects);
+    ballIndex = 0;
+
 
     // walls 
     rightWall = Bodies.rectangle(p.width - 10, p.height/2, 25, p.height, {isStatic: true});
