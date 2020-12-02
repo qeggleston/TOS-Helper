@@ -11,17 +11,13 @@ var ballObjects;
 var ballIndex;
 var termBalls;
 
-let firstOptions = true;
-let secondOptions = false;
+//let firstOptions = true;
+//let secondOptions = false;
 let viz = false;
-let document;
+let terms;
 
 let button1;
 let button2;
-
-let lengthToSize;
-let freqToWeight;
-let weightToRest;
 //add more parameters here
 
 let wordBubbles;
@@ -29,25 +25,27 @@ let wordBubbles;
 export default function sketch(p) {
 
     p.setup = () => {
-        canvas = p.createCanvas(p.windowWidth, p.windowHeight);        
-        setupFirstOptions(p);
+        canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+            
     }
     
     p.myCustomRedrawAccordingToNewPropsHandler = function(props) {
-        if(props.document != null) {
-            document = props.document;
-            console.log(document);
+        if(props.terms != null) {
+            terms = props.terms;
+            if(!viz)
+                setupViz(p);
+                viz = true;
         }
     }
 
     p.draw = () => {
-        if(firstOptions) {
+        /**if(firstOptions) {
             p.background(0);
         }
         else if(secondOptions) {
             p.background(0);
         }
-        else if(viz) {
+        else**/ if(viz) {
             p.background(131,173,225);
 
             p.stroke(255);
@@ -61,6 +59,7 @@ export default function sketch(p) {
                     p.stroke(0);
                     p.fill(0);
                     p.textAlign(p.CENTER);
+                    p.textSize(24);
                     p.text(termBalls[x].term, ballObjects[x].position.x, ballObjects[x].position.y + 5); //make this center
                 }
             }
@@ -91,7 +90,7 @@ export default function sketch(p) {
 
 }
 
-function setupFirstOptions(p) {
+/**function setupFirstOptions(p) {
     button1 = p.createButton('click me 1');
     button1.position(p.width/2, p.height/2);
     button1.mousePressed(() => setupSecondOptions(p));
@@ -106,7 +105,7 @@ function setupSecondOptions(p) {
     button2.position(p.width/2, p.height/2);
     button2.mousePressed(() => setupViz(p));
 
-}
+}**/
 
 
 function drawVertices(vertices, p) {
@@ -118,12 +117,10 @@ function drawVertices(vertices, p) {
 }
 
 function setupViz(p) {
-    secondOptions = false;
+    //secondOptions = false;
     viz = true;
-    button2.remove();
+    //button2.remove();
 
-    let uniqueTerms = document.getUniqueTerms();
-    console.log(uniqueTerms);
     termBalls = [];
     ballObjects = [];
 
@@ -142,34 +139,31 @@ function setupViz(p) {
     World.add(engine.world, [catapult, constraint]);
 
     let xPos = 50;
-    let yPos = 50;
+    let yPos = 200;
 
-    for(let x = 0; x < uniqueTerms.length; x++) {
-        if(uniqueTerms[x].length > 11) {
-            termBalls[termBalls.length] = {
-                term: uniqueTerms[x],
-                freq: document.getTermFrequency(uniqueTerms[x]),
-                ball: null,
-                size: 30,
-                draw: false
-            };
-            termBalls[termBalls.length - 1].ball = Bodies.circle(xPos, yPos, termBalls[termBalls.length - 1].size, {density: termBalls[termBalls.length - 1].freq/10, restitution: 0.5}); 
+    for(let x = 0; x < terms.length; x++) {
+        termBalls[termBalls.length] = {
+            term: terms[x].term,
+            freq: terms[x].freq,
+            ball: null,
+            size: terms[x].length * 5,
+            weight: terms[x].weight,
+            draw: false
+        };
+        termBalls[termBalls.length - 1].ball = Bodies.circle(xPos, yPos, termBalls[termBalls.length - 1].size, {density: termBalls[termBalls.length - 1].freq, restitution: termBalls[termBalls.length-1].weight/10});
             //size will be lengthToSize[x], density will be freqToWeight[x], rest will be weightToRest[x]
-            ballObjects[ballObjects.length] = termBalls[termBalls.length - 1].ball;
+        ballObjects[ballObjects.length] = termBalls[termBalls.length - 1].ball;
 
-            if(xPos > p.width - 100) {
-                xPos = 50;
-                yPos += 50;
-            }
-            else {
-                xPos += 50;
-            }
-            
+        if(xPos > p.width - 100) {
+            xPos = 50;
         }
+        else {
+            xPos += 50;
+        }
+            
     }
 
     ballIndex = 0;
-
 
     // walls 
     rightWall = Bodies.rectangle(p.width - 10, p.height/2, 25, p.height, {isStatic: true});
