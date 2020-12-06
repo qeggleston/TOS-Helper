@@ -2,10 +2,14 @@ body {
   background-color: lightskyblue;
 }
 
+#loading {
+  
+}
+
 #wrapper {
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: 25vh 50vh 5vh 5vh 5vh 5vh 5vh;
+  grid-template-rows: 25vh 1vh 50vh 5vh 5vh 5vh 5vh 5vh;
   text-align: center;
   justify-items: center;
   align-items: center;
@@ -17,8 +21,29 @@ textarea {
   resize: none;
 }
 
+#help {
+  width: 50em;
+}
+
 #title {
   font-size: 48px;
   font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+}
+
+button {
+  background-color: rgb(31, 142, 150);
+  border: none;
+  color: white;
+  padding: 10px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin-left: 10px;
+  border-radius: 4px;
+}
+
+button:hover {
+  background-color: black;
 }
 

@@ -1,4 +1,3 @@
-
 import { Engine, World, Body, Bodies, Constraint, Mouse, MouseConstraint } from 'matter-js';
 
 var engine;
@@ -17,6 +16,7 @@ let viz = false;
 let placing;
 let terms;
 let sel;
+let legendText;
 
 //let wordBubbles;
 
@@ -66,8 +66,10 @@ export default function sketch(p) {
 
             p.stroke(0);
             p.fill(0);
+            p.textSize(24);
+            p.textAlign(p.LEFT);
+            p.text(legendText, 50, 50);
 
-            p.rect(0, 0, 50, 50);
         }
     }
 
@@ -76,7 +78,7 @@ export default function sketch(p) {
                 let index = sel.value();
                 placedBalls[placedBalls.length] = JSON.parse(JSON.stringify(refBalls[index]));
                 let place = placedBalls[placedBalls.length - 1];
-                placedBalls[placedBalls.length - 1].ball = Bodies.circle(p.mouseX, p.mouseY, place.size, {restitution: place.restitution, mass: place.mass});
+                placedBalls[placedBalls.length - 1].ball = Bodies.rectangle(p.mouseX, p.mouseY, place.size*2, place.size*2, {friction: 1, restitution: place.restitution, mass: place.mass});
 
                 World.add(engine.world, placedBalls[placedBalls.length-1].ball);
             }
@@ -97,13 +99,20 @@ function togglePlacing() {
     placing = !placing;
 }
 
+function updateLegendText() {
+    let index = sel.value();
+    legendText = "Legend\n\nWord: " +refBalls[index].term + "\nWord Frequency & Mass: " + refBalls[index].mass + "\nWord Length: " +
+        refBalls[index].term.length + " characters\nCircle Size (Length * 5): " + refBalls[index].size + "\nTF-IDF Weight: " + refBalls[index].restitution*10 +
+        "\nRestitution (Bounciness, TF-IDF Weight/10): " + refBalls[index].restitution;
+}
+
 function setupViz(p) {
 
     viz = true;
     placing = false;
     let placingCheckbox = p.createCheckbox('Placing Circles', false);
     placingCheckbox.position(p.width-300, 30);
-    placingCheckbox.mouseClicked(togglePlacing)
+    placingCheckbox.changed(togglePlacing)
 
     refBalls = [];
     placedBalls = [];
@@ -111,7 +120,7 @@ function setupViz(p) {
     engine = Engine.create();
 
     // add revolute constraint for catapult
-    catapult = Bodies.rectangle(p.width/2, p.height - 200, p.width - 200, 50);
+    catapult = Bodies.rectangle(p.width/2, p.height - 200, p.width - 200, 50, {friction: 1});
     catapult.slop = 1;
     constraint = Constraint.create({
         pointA: {x: p.width/2, y: p.height-200},
@@ -134,12 +143,19 @@ function setupViz(p) {
         };
         //size will be lengthToSize[x], density will be freqToWeight[x], rest will be weightToRest[x]
         //ballObjects[ballObjects.length] = termBalls[termBalls.length - 1].ball;
-
-        sel.option(terms[x].term, x);
             
     }
-    sel.changed(selectChanged);
 
+    sel.changed(updateLegendText);
+
+    refBalls.sort(compareTerms);
+    legendText = "Legend\n\nWord: " +refBalls[0].term + "\nWord Frequency & Mass: " + refBalls[0].mass + "\nWord Length: " +
+                 refBalls[0].term.length + " characters\nCircle Size (Length * 5): " + refBalls[0].size + "\nTF-IDF Weight: " + refBalls[0].restitution*10 +
+                 "\nRestitution (Bounciness, TF-IDF Weight/10): " + refBalls[0].restitution;
+
+    for(let x = 0; x < refBalls.length; x++) {
+        sel.option(refBalls[x].term, x);
+    }
     // walls 
     rightWall = Bodies.rectangle(p.width - 10, p.height/2, 25, p.height, {isStatic: true});
     leftWall = Bodies.rectangle(10, p.height/2, 25, p.height, {isStatic: true});
@@ -161,10 +177,9 @@ function setupViz(p) {
     Engine.run(engine);
 }
 
-function selectChanged() {
-    console.log(sel.value());
+function compareTerms(a, b) {
+    return a.term.localeCompare(b.term);
 }
-
 //draw floating word bubbles 
 function drawWordBubble(p) {
 

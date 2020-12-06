@@ -478,6 +478,7 @@ class App extends React.Component {
     super();
     this.state = {
       show: false,
+      help: false
     };
   }
 
@@ -505,8 +506,11 @@ class App extends React.Component {
       inputText: event.target.value
     })
   }
-  showHelp = () => {
-
+  toggleHelp = () => {
+    
+    this.setState({
+      help: !this.state.help
+    })
   }
   processUserInput = () => {
     if(this.state.inputText) {
@@ -523,34 +527,67 @@ class App extends React.Component {
   render() {
     console.log("render() method");
 
-    if(!this.state.showFacebook && !this.state.showGoogle && !this.state.showReddit && !this.state.showUserTerms) {
+    if(this.state.loading) {
+      return(
+        <>
+          <div id="loading">
+            
+          </div>
+        </>
+      )
+    }
+    else if(this.state.help) {
+      return(
+        <>
+            <div id="wrapper">
+              <label id = "title">Help</label>
+              <label id= "help">
+                <p>
+                  Welcome to Toss the TOS! This is a visualization intended to make light of the absurd complexity of Terms of Service agreements,
+                  and hopefully help process them. To begin, copy and paste a Terms of Service agreement (or any other text) into the text area on the home page and click 
+                  "Submit", or click "Facebook", "Reddit", or "Twitter" to use their terms as an example. 
+
+                  The app will then process the entered or selected text and display a second screen. Use the drop-down menu on the top right to select from the words that 
+                  were detected in the submitted text. If the checkbox in the top right is checked, click anywhere on the screen to drop a circle representing that word.
+                  The circle's weight is based on its frequency within the document, its restitution, or "bounciness," is based  
+                  on <a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf">TFIDF</a> weight, and its size is based on the
+                  length of the word. You can also click and drag the circles around the screen.
+                </p> 
+              </label>
+              <button onClick={this.toggleHelp}>Back</button>
+            </div>
+        </>
+      )
+    }
+    else if(!this.state.showFacebook && !this.state.showGoogle && !this.state.showReddit && !this.state.showUserTerms) {
       return (
         <>
-          <body>
             <div id="wrapper">
               <label id="title">Toss the TOS!</label>
+              <label>Paste Terms Here:</label>
               <textarea onChange={ this.updateInputText }></textarea>
               <div id="buttons">
                 <button onClick={this.processUserInput}>Submit</button>
-                <button onClick={this.showHelp}>Help</button>
+                <button onClick={this.toggleHelp}>Help</button>
               </div>
               <div id="examples"> 
-              <button onClick={this.clickReddit}>Reddit</button>
-              <button onClick={this.clickGoogle}>Google</button>
-              <button onClick={this.clickFacebook}>Facebook</button>
+                <button onClick={this.clickReddit}>Reddit</button>
+                <button onClick={this.clickGoogle}>Google</button>
+                <button onClick={this.clickFacebook}>Facebook</button>
               </div>
             </div>
-          </body>
         </>
       );
     }
+    
     else {
+      console.log("Adding viz");
       return (
         <P5Wrapper
             sketch={sketch}
             terms={this.state.terms}>
         </P5Wrapper>
-    );
+      );
     }
   }
 }
