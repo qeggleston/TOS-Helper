@@ -14,6 +14,7 @@ var placedBalls;
 //let firstOptions = true;
 //let secondOptions = false;
 let viz = false;
+let placing;
 let terms;
 let sel;
 
@@ -71,12 +72,14 @@ export default function sketch(p) {
     }
 
     p.mousePressed = () => {
-            let index = sel.value();
-            placedBalls[placedBalls.length] = JSON.parse(JSON.stringify(refBalls[index]));
-            let place = placedBalls[placedBalls.length - 1];
-            placedBalls[placedBalls.length - 1].ball = Bodies.circle(p.mouseX, p.mouseY, place.size, {restitution: place.restitution, mass: place.mass});
+            if(!(p.mouseY < 60) && placing) {
+                let index = sel.value();
+                placedBalls[placedBalls.length] = JSON.parse(JSON.stringify(refBalls[index]));
+                let place = placedBalls[placedBalls.length - 1];
+                placedBalls[placedBalls.length - 1].ball = Bodies.circle(p.mouseX, p.mouseY, place.size, {restitution: place.restitution, mass: place.mass});
 
-            World.add(engine.world, placedBalls[placedBalls.length-1].ball);
+                World.add(engine.world, placedBalls[placedBalls.length-1].ball);
+            }
            
     }
 
@@ -90,9 +93,17 @@ function drawVertices(vertices, p) {
     p.endShape(p.CLOSE);
 }
 
+function togglePlacing() {
+    placing = !placing;
+}
+
 function setupViz(p) {
 
     viz = true;
+    placing = false;
+    let placingCheckbox = p.createCheckbox('Placing Circles', false);
+    placingCheckbox.position(p.width-300, 30);
+    placingCheckbox.mouseClicked(togglePlacing)
 
     refBalls = [];
     placedBalls = [];
