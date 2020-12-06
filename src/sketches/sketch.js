@@ -7,20 +7,17 @@ var catapult;
 var constraint;
 var canvas;
 var mouseConstraint;
-var ballObjects;
-var ballIndex;
-var termBalls;
+
+var refBalls;
+var placedBalls;
 
 //let firstOptions = true;
 //let secondOptions = false;
 let viz = false;
 let terms;
+let sel;
 
-let button1;
-let button2;
-//add more parameters here
-
-let wordBubbles;
+//let wordBubbles;
 
 export default function sketch(p) {
 
@@ -39,29 +36,22 @@ export default function sketch(p) {
     }
 
     p.draw = () => {
-        /**if(firstOptions) {
-            p.background(0);
-        }
-        else if(secondOptions) {
-            p.background(0);
-        }
-        else**/ if(viz) {
+        if(viz) {
             p.background(131,173,225);
 
             p.stroke(255);
             p.fill(255);
             drawVertices(catapult.vertices, p);
-            for(let x = 0; x < ballObjects.length; x++) {
-                if(termBalls[x].draw) {
-                    p.stroke(249,228,219);
-                    p.fill(249,228,219);
-                    drawVertices(ballObjects[x].vertices, p);
-                    p.stroke(0);
-                    p.fill(0);
-                    p.textAlign(p.CENTER);
-                    p.textSize(24);
-                    p.text(termBalls[x].term, ballObjects[x].position.x, ballObjects[x].position.y + 5); //make this center
-                }
+            for(let x = 0; x < placedBalls.length; x++) {
+                p.stroke(249,228,219);
+                p.fill(249,228,219);
+                drawVertices(placedBalls[x].ball.vertices, p);
+                p.stroke(0);
+                p.fill(0);
+                p.textAlign(p.CENTER);
+                p.textSize(24);
+                p.text(placedBalls[x].term, placedBalls[x].ball.position.x, placedBalls[x].ball.position.y + 5); //make this center
+                
             }
             p.stroke(128);
             p.strokeWeight(2);
@@ -81,32 +71,16 @@ export default function sketch(p) {
     }
 
     p.mousePressed = () => {
-        if(p.mouseX < 50 && p.mouseX > 0 && p.mouseY < 50 && p.mouseX > 0 && ballIndex < ballObjects.length) {
-            World.add(engine.world, ballObjects[ballIndex]);
-            termBalls[ballIndex].draw = true;
-            ballIndex++;
-        }   
+            let index = sel.value();
+            placedBalls[placedBalls.length] = JSON.parse(JSON.stringify(refBalls[index]));
+            let place = placedBalls[placedBalls.length - 1];
+            placedBalls[placedBalls.length - 1].ball = Bodies.circle(p.mouseX, p.mouseY, place.size, {restitution: place.restitution, mass: place.mass});
+
+            World.add(engine.world, placedBalls[placedBalls.length-1].ball);
+           
     }
 
 }
-
-/**function setupFirstOptions(p) {
-    button1 = p.createButton('click me 1');
-    button1.position(p.width/2, p.height/2);
-    button1.mousePressed(() => setupSecondOptions(p));
-
-}
-
-function setupSecondOptions(p) {
-    firstOptions = false;
-    secondOptions = true;
-    button1.remove();
-    button2 = p.createButton('click me 2');
-    button2.position(p.width/2, p.height/2);
-    button2.mousePressed(() => setupViz(p));
-
-}**/
-
 
 function drawVertices(vertices, p) {
     p.beginShape();
@@ -117,12 +91,11 @@ function drawVertices(vertices, p) {
 }
 
 function setupViz(p) {
-    //secondOptions = false;
-    viz = true;
-    //button2.remove();
 
-    termBalls = [];
-    ballObjects = [];
+    viz = true;
+
+    refBalls = [];
+    placedBalls = [];
 
     engine = Engine.create();
 
@@ -138,32 +111,23 @@ function setupViz(p) {
     });
     World.add(engine.world, [catapult, constraint]);
 
-    let xPos = 50;
-    let yPos = 200;
+    sel = p.createSelect();
+    sel.position(p.width - 150, 30);
 
     for(let x = 0; x < terms.length; x++) {
-        termBalls[termBalls.length] = {
+        refBalls[x] = {
             term: terms[x].term,
-            freq: terms[x].freq,
-            ball: null,
+            mass: terms[x].freq,
             size: terms[x].length * 5,
-            weight: terms[x].weight,
-            draw: false
+            restitution: terms[x].weight/10,
         };
-        termBalls[termBalls.length - 1].ball = Bodies.circle(xPos, yPos, termBalls[termBalls.length - 1].size, {density: termBalls[termBalls.length - 1].freq, restitution: termBalls[termBalls.length-1].weight/10});
-            //size will be lengthToSize[x], density will be freqToWeight[x], rest will be weightToRest[x]
-        ballObjects[ballObjects.length] = termBalls[termBalls.length - 1].ball;
+        //size will be lengthToSize[x], density will be freqToWeight[x], rest will be weightToRest[x]
+        //ballObjects[ballObjects.length] = termBalls[termBalls.length - 1].ball;
 
-        if(xPos > p.width - 100) {
-            xPos = 50;
-        }
-        else {
-            xPos += 50;
-        }
+        sel.option(terms[x].term, x);
             
     }
-
-    ballIndex = 0;
+    sel.changed(selectChanged);
 
     // walls 
     rightWall = Bodies.rectangle(p.width - 10, p.height/2, 25, p.height, {isStatic: true});
@@ -184,6 +148,10 @@ function setupViz(p) {
 
     // run the engine
     Engine.run(engine);
+}
+
+function selectChanged() {
+    console.log(sel.value());
 }
 
 //draw floating word bubbles 

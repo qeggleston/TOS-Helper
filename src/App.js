@@ -456,7 +456,7 @@ Live Policies: These policies apply to all content broadcast to Facebook through
 Date of Last Revision: October 22, 2020`]
 
 function textAnalyze(name) {
-  let corpus = new Corpus(testTitle, testText);
+  let corpus = new Corpus(testTitle, testText, false, []);
   let terms = corpus.getTopTermsForDocument(name, 999);
   let doc = corpus.getDocument(name);
   let processedTerms = [];
@@ -500,16 +500,47 @@ class App extends React.Component {
                     terms: terms
     });
   };
+  updateInputText = (event) => {
+    this.setState({
+      inputText: event.target.value
+    })
+  }
+  showHelp = () => {
+
+  }
+  processUserInput = () => {
+    if(this.state.inputText) {
+      testTitle[testTitle.length] = "userTerms";
+      testText[testText.length] = this.state.inputText;
+      let terms = textAnalyze("userTerms");
+      this.setState({
+        showUserTerms: true,
+        terms: terms
+      })
+    }
+  }
 
   render() {
     console.log("render() method");
 
-    if(!this.state.showFacebook && !this.state.showGoogle && !this.state.showReddit) {
+    if(!this.state.showFacebook && !this.state.showGoogle && !this.state.showReddit && !this.state.showUserTerms) {
       return (
         <>
-          <button onClick={this.clickReddit}>Reddit</button>
-          <button onClick={this.clickGoogle}>Google</button>
-          <button onClick={this.clickFacebook}>Facebook</button>
+          <body>
+            <div id="wrapper">
+              <label id="title">Toss the TOS!</label>
+              <textarea onChange={ this.updateInputText }></textarea>
+              <div id="buttons">
+                <button onClick={this.processUserInput}>Submit</button>
+                <button onClick={this.showHelp}>Help</button>
+              </div>
+              <div id="examples"> 
+              <button onClick={this.clickReddit}>Reddit</button>
+              <button onClick={this.clickGoogle}>Google</button>
+              <button onClick={this.clickFacebook}>Facebook</button>
+              </div>
+            </div>
+          </body>
         </>
       );
     }
