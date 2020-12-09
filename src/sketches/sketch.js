@@ -16,7 +16,10 @@ let viz = false;
 let placing;
 let terms;
 let sel;
+let shapeInput;
 let legendText;
+let shapeSides;
+let shapeButton;
 
 //let wordBubbles;
 
@@ -68,7 +71,7 @@ export default function sketch(p) {
             p.fill(0);
             p.textSize(24);
             p.textAlign(p.LEFT);
-            p.text(legendText, 50, 50);
+            p.text(legendText, 50, 100);
 
         }
     }
@@ -78,7 +81,14 @@ export default function sketch(p) {
                 let index = sel.value();
                 placedBalls[placedBalls.length] = JSON.parse(JSON.stringify(refBalls[index]));
                 let place = placedBalls[placedBalls.length - 1];
-                placedBalls[placedBalls.length - 1].ball = Bodies.rectangle(p.mouseX, p.mouseY, place.size*2, place.size*2, {friction: 1, restitution: place.restitution, mass: place.mass});
+
+                let sides = 0;
+                if(parseInt(shapeSides) && parseInt(shapeSides) > 2) {
+                    placedBalls[placedBalls.length - 1].ball = Bodies.polygon(p.mouseX, p.mouseY, shapeSides, place.size*2, {friction: 1, restitution: place.restitution, mass: place.mass});
+                }
+                else {
+                    placedBalls[placedBalls.length - 1].ball = Bodies.circle(p.mouseX, p.mouseY, place.size*2, {friction: 1, restitution: place.restitution, mass: place.mass});
+                }
 
                 World.add(engine.world, placedBalls[placedBalls.length-1].ball);
             }
@@ -102,15 +112,20 @@ function togglePlacing() {
 function updateLegendText() {
     let index = sel.value();
     legendText = "Legend\n\nWord: " +refBalls[index].term + "\nWord Frequency & Mass: " + refBalls[index].mass + "\nWord Length: " +
-        refBalls[index].term.length + " characters\nCircle Size (Length * 5): " + refBalls[index].size + "\nTF-IDF Weight: " + refBalls[index].restitution*10 +
+        refBalls[index].term.length + " characters\nShape Size (Length * 5): " + refBalls[index].size + "\nTF-IDF Weight: " + refBalls[index].restitution*10 +
         "\nRestitution (Bounciness, TF-IDF Weight/10): " + refBalls[index].restitution;
+}
+
+function updateShapeSides() {
+    shapeSides = shapeInput.value();
 }
 
 function setupViz(p) {
 
+    shapeSides = -1;
     viz = true;
     placing = false;
-    let placingCheckbox = p.createCheckbox('Placing Circles', false);
+    let placingCheckbox = p.createCheckbox('Placing Shapes', false);
     placingCheckbox.position(p.width-300, 30);
     placingCheckbox.changed(togglePlacing)
 
@@ -120,7 +135,7 @@ function setupViz(p) {
     engine = Engine.create();
 
     // add revolute constraint for catapult
-    catapult = Bodies.rectangle(p.width/2, p.height - 200, p.width - 200, 50, {friction: 1});
+    catapult = Bodies.rectangle(p.width/2, p.height - 200, p.width - 200, 50, {friction: 1, mass:2});
     catapult.slop = 1;
     constraint = Constraint.create({
         pointA: {x: p.width/2, y: p.height-200},
@@ -132,15 +147,25 @@ function setupViz(p) {
     World.add(engine.world, [catapult, constraint]);
 
     sel = p.createSelect();
-    sel.position(p.width - 150, 30);
+    sel.position(p.width - 150, 33);
+    
+    shapeInput = p.createInput();
+    shapeInput.position(p.width - 210, 60);    
+
+    shapeButton = p.createButton("Set Shape Side Number");
+    shapeButton.position(p.width - 270, 90);    
+    shapeButton.mousePressed(updateShapeSides);
 
     for(let x = 0; x < terms.length; x++) {
         refBalls[x] = {
             term: terms[x].term,
             mass: terms[x].freq,
             size: terms[x].length * 5,
-            restitution: terms[x].weight/10,
+            restitution: terms[x].weight/2,
         };
+        if(refBalls[x].restitution > 1) {
+            refBalls[x].restitution = 1;
+        }
         //size will be lengthToSize[x], density will be freqToWeight[x], rest will be weightToRest[x]
         //ballObjects[ballObjects.length] = termBalls[termBalls.length - 1].ball;
             
@@ -150,7 +175,7 @@ function setupViz(p) {
 
     refBalls.sort(compareTerms);
     legendText = "Legend\n\nWord: " +refBalls[0].term + "\nWord Frequency & Mass: " + refBalls[0].mass + "\nWord Length: " +
-                 refBalls[0].term.length + " characters\nCircle Size (Length * 5): " + refBalls[0].size + "\nTF-IDF Weight: " + refBalls[0].restitution*10 +
+                 refBalls[0].term.length + " characters\nShape Size (Length * 5): " + refBalls[0].size + "\nTF-IDF Weight: " + refBalls[0].restitution*10 +
                  "\nRestitution (Bounciness, TF-IDF Weight/10): " + refBalls[0].restitution;
 
     for(let x = 0; x < refBalls.length; x++) {

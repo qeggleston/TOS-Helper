@@ -478,7 +478,7 @@ class App extends React.Component {
     super();
     this.state = {
       show: false,
-      help: false
+      help: false,
     };
   }
 
@@ -522,6 +522,10 @@ class App extends React.Component {
         terms: terms
       })
     }
+  }
+  goBack = () => {
+    console.log("Back button");
+    window.location.reload();
   }
 
   render() {
@@ -583,10 +587,13 @@ class App extends React.Component {
     else {
       console.log("Adding viz");
       return (
-        <P5Wrapper
-            sketch={sketch}
-            terms={this.state.terms}>
-        </P5Wrapper>
+        <>
+          <button id="back" onClick={this.goBack}>Back</button>
+          <P5Wrapper
+              sketch={sketch}
+              terms={this.state.terms}>
+          </P5Wrapper>
+        </>
       );
     }
   }

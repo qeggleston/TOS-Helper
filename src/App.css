@@ -3,7 +3,7 @@ body {
 }
 
 #loading {
-  
+
 }
 
 #wrapper {
@@ -41,6 +41,12 @@ button {
   font-size: 16px;
   margin-left: 10px;
   border-radius: 4px;
+}
+
+#back {
+  position: absolute;
+  top: 30px;
+  left: 40px;
 }
 
 button:hover {
